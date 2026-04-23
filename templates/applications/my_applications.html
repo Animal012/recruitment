@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои отклики{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Мои отклики</h2>
+
+{% if applications %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Вакансия</th>
+        <th>Статус</th>
+        <th>Оценка скрининга</th>
+        <th>Дата отклика</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for app in applications %}
+      <tr>
+        <td><a href="{% url 'vacancy_detail' app.vacancy.pk %}">{{ app.vacancy.title }}</a></td>
+        <td>{{ app.get_status_display }}</td>
+        <td>
+          {% if app.screening_result %}
+            <span class="fw-semibold">{{ app.screening_result.score|floatformat:0 }}%</span>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+        <td>{{ app.created_at|date:"d.m.Y" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="alert alert-info">Вы ещё не откликались на вакансии. <a href="{% url 'vacancy_list' %}">Найти вакансии</a>.</div>
+{% endif %}
+{% endblock %}

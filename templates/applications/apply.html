@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Отклик на вакансию{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="card-title mb-1">Отклик на вакансию</h4>
+        <p class="text-muted mb-4">{{ vacancy.title }}</p>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Сопроводительное письмо <span class="text-muted fw-normal">(необязательно)</span></label>
+            <textarea name="cover_letter" class="form-control" rows="5"
+                      placeholder="Расскажите, почему вы подходите на эту позицию..."></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Отправить отклик</button>
+            <a href="{% url 'vacancy_detail' vacancy.pk %}" class="btn btn-outline-secondary">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

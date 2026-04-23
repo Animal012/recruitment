@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Вакансии{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Вакансии</h2>
+
+<form id="search-form" method="get" class="card card-body mb-4 shadow-sm">
+  <div class="row g-2">
+    <div class="col-md-5">
+      <input id="search-input" type="text" name="q" value="{{ query }}"
+             class="form-control" placeholder="Поиск по названию или описанию"
+             list="search-history" autocomplete="off">
+      {% if recent_queries %}
+      <datalist id="search-history">
+        {% for q in recent_queries %}<option value="{{ q }}">{% endfor %}
+      </datalist>
+      {% endif %}
+    </div>
+    <div class="col-md-3">
+      <select id="city-select" name="city" class="form-select">
+        <option value="">Все города</option>
+        {% for c in cities %}
+        <option value="{{ c }}" {% if c == city %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <input id="salary-input" type="number" name="salary_from" value="{{ salary_from }}"
+             class="form-control" placeholder="Зарплата от (₽)">
+    </div>
+  </div>
+</form>
+
+<div id="results">
+  {% if page_obj %}
+    {% for vacancy in page_obj %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="card-title mb-1">
+              <a href="{% url 'vacancy_detail' vacancy.pk %}" class="text-decoration-none">{{ vacancy.title }}</a>
+            </h5>
+            <p class="text-muted mb-1">
+              {% if vacancy.employer.employer_profile.organization_name %}
+                {{ vacancy.employer.employer_profile.organization_name }}
+              {% endif %}
+              {% if vacancy.city %} · {{ vacancy.city }}{% endif %}
+            </p>
+          </div>
+          {% if vacancy.salary_from or vacancy.salary_to %}
+          <div class="text-end text-success fw-semibold text-nowrap ms-3">
+            {% if vacancy.salary_from %}от {{ vacancy.salary_from|floatformat:0 }} ₽{% endif %}
+            {% if vacancy.salary_to %} до {{ vacancy.salary_to|floatformat:0 }} ₽{% endif %}
+          </div>
+          {% endif %}
+        </div>
+        <p class="card-text text-muted mt-2 mb-0">{{ vacancy.description|truncatechars:200 }}</p>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+    <nav>
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&city={{ city }}&salary_from={{ salary_from }}">‹</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&city={{ city }}&salary_from={{ salary_from }}">›</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info">Вакансии не найдены.</div>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  const form = document.getElementById('search-form');
+  const searchInput = document.getElementById('search-input');
+  const citySelect = document.getElementById('city-select');
+  const salaryInput = document.getElementById('salary-input');
+  const resultsDiv = document.getElementById('results');
+  let timer;
+
+  function fetchResults() {
+    const params = new URLSearchParams({
+      q: searchInput.value,
+      city: citySelect.value,
+      salary_from: salaryInput.value,
+    });
+
+    fetch('/vacancies/?' + params.toString(), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(r => r.text())
+      .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const newResults = doc.getElementById('results');
+        if (newResults) resultsDiv.innerHTML = newResults.innerHTML;
+        // обновляем URL без перезагрузки страницы
+        window.history.replaceState(null, '', '/vacancies/?' + params.toString());
+      });
+  }
+
+  function debounced() {
+    clearTimeout(timer);
+    timer = setTimeout(fetchResults, 400);
+  }
+
+  searchInput.addEventListener('input', debounced);
+  citySelect.addEventListener('change', fetchResults);
+  salaryInput.addEventListener('input', debounced);
+
+  // Enter в поле — тоже работает, но без перезагрузки
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearTimeout(timer);
+    fetchResults();
+  });
+})();
+</script>
+{% endblock %}

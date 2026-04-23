@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои вакансии{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Мои вакансии</h2>
+  <a href="{% url 'vacancy_create' %}" class="btn btn-primary">+ Создать вакансию</a>
+</div>
+
+{% if vacancies %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Название</th>
+        <th>Город</th>
+        <th>Статус</th>
+        <th>Откликов</th>
+        <th>Создана</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in vacancies %}
+      <tr>
+        <td><a href="{% url 'vacancy_detail' v.pk %}">{{ v.title }}</a></td>
+        <td>{{ v.city|default:"—" }}</td>
+        <td>
+          {% if v.status == 'open' %}
+            <span class="badge bg-success">Открыта</span>
+          {% else %}
+            <span class="badge bg-secondary">Закрыта</span>
+          {% endif %}
+        </td>
+        <td>{{ v.applications.count }}</td>
+        <td>{{ v.created_at|date:"d.m.Y" }}</td>
+        <td>
+          <a href="{% url 'vacancy_applications' v.pk %}" class="btn btn-sm btn-outline-secondary">Отклики</a>
+          <a href="{% url 'vacancy_edit' v.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+          {% if v.status == 'open' %}
+          <form method="post" action="{% url 'vacancy_close' v.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Закрыть вакансию?')">Закрыть</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="alert alert-info">У вас пока нет вакансий. <a href="{% url 'vacancy_create' %}">Создать первую</a>.</div>
+{% endif %}
+{% endblock %}

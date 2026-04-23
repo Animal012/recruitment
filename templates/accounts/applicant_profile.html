@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+<div class="row">
+
+  <!-- Левая колонка: фото + резюме -->
+  <div class="col-md-3 mb-4">
+    <div class="card shadow-sm text-center p-3 mb-3">
+      {% if profile.photo %}
+        <img src="{{ profile.photo.url }}" class="rounded-circle mx-auto d-block mb-2"
+             style="width:100px;height:100px;object-fit:cover">
+      {% else %}
+        <div class="rounded-circle bg-secondary mx-auto mb-2 d-flex align-items-center justify-content-center"
+             style="width:100px;height:100px">
+          <i class="bi bi-person-fill text-white fs-1"></i>
+        </div>
+      {% endif %}
+      <p class="fw-semibold mb-0">{{ request.user.get_full_name }}</p>
+      <small class="text-muted">Соискатель</small>
+    </div>
+
+    <div class="card shadow-sm p-3">
+      <h6 class="fw-semibold mb-2">Резюме</h6>
+      {% if profile.resume_file %}
+        <p class="text-success small mb-1"><i class="bi bi-file-earmark-check"></i> Файл загружен</p>
+        <a href="{{ profile.resume_file.url }}" class="btn btn-sm btn-outline-primary w-100 mb-2" target="_blank">
+          Скачать резюме
+        </a>
+        <form method="post" action="{% url 'delete_resume' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger w-100 mb-2"
+                  onclick="return confirm('Удалить резюме?')">Удалить резюме</button>
+        </form>
+        <hr class="my-2">
+        <p class="small text-muted mb-1">Заменить файл:</p>
+      {% else %}
+        <p class="text-muted small mb-2">Резюме не загружено</p>
+      {% endif %}
+      <form method="post" action="{% url 'upload_resume' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="resume_file" accept=".pdf" class="form-control form-control-sm mb-2">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Загрузить PDF</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Правая колонка: формы -->
+  <div class="col-md-9">
+
+    <!-- Основная информация -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">Личные данные</h5>
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            {% for field in profile_form %}
+            <div class="col-md-{% if field.name == 'about' %}12{% else %}6{% endif %}">
+              <label class="form-label fw-semibold">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="text-danger small">{% for e in field.errors %}{{ e }}{% endfor %}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Образование -->
+          <hr class="my-4">
+          <h5 class="mb-3">Образование</h5>
+          {{ edu_formset.management_form }}
+          {% for form in edu_formset %}
+          <div class="border rounded p-3 mb-3 position-relative">
+            {% if edu_formset.can_delete %}
+            <div class="form-check position-absolute top-0 end-0 m-2">
+              {{ form.DELETE }}
+              <label class="form-check-label text-danger small">Удалить</label>
+            </div>
+            {% endif %}
+            <div class="row g-2">
+              {% for field in form.visible_fields %}
+              {% if field.name != 'DELETE' %}
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+          </div>
+          {% endfor %}
+
+          <!-- Опыт работы -->
+          <hr class="my-4">
+          <h5 class="mb-3">Опыт работы</h5>
+          {{ exp_formset.management_form }}
+          {% for form in exp_formset %}
+          <div class="border rounded p-3 mb-3 position-relative">
+            {% if exp_formset.can_delete %}
+            <div class="form-check position-absolute top-0 end-0 m-2">
+              {{ form.DELETE }}
+              <label class="form-check-label text-danger small">Удалить</label>
+            </div>
+            {% endif %}
+            <div class="row g-2">
+              {% for field in form.visible_fields %}
+              {% if field.name != 'DELETE' %}
+              <div class="col-md-{% if field.name == 'description' or field.name == 'is_current' %}12{% else %}6{% endif %}">
+                <label class="form-label small fw-semibold">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+          </div>
+          {% endfor %}
+
+          <button type="submit" class="btn btn-primary mt-2">Сохранить профиль</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

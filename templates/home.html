@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}EduRecruit — подбор персонала для образовательных организаций{% endblock %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-primary text-white rounded-3">
+  <div class="container-fluid py-3">
+    <h1 class="display-5 fw-bold">Подбор персонала для образовательных организаций</h1>
+    <p class="col-md-8 fs-4">Найдите лучших специалистов или работу своей мечты в сфере образования.</p>
+    {% if not user.is_authenticated %}
+    <a href="{% url 'register' %}" class="btn btn-light btn-lg me-2">Зарегистрироваться</a>
+    <a href="{% url 'vacancy_list' %}" class="btn btn-outline-light btn-lg">Смотреть вакансии</a>
+    {% else %}
+    <a href="{% url 'vacancy_list' %}" class="btn btn-light btn-lg">Смотреть вакансии</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body text-center p-4">
+        <i class="bi bi-search fs-1 text-primary"></i>
+        <h5 class="card-title mt-3">Поиск вакансий</h5>
+        <p class="card-text text-muted">Удобный поиск и фильтрация вакансий в образовательных учреждениях.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body text-center p-4">
+        <i class="bi bi-robot fs-1 text-primary"></i>
+        <h5 class="card-title mt-3">Автоматический скрининг</h5>
+        <p class="card-text text-muted">Система автоматически оценивает соответствие резюме требованиям вакансии.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body text-center p-4">
+        <i class="bi bi-building fs-1 text-primary"></i>
+        <h5 class="card-title mt-3">Для работодателей</h5>
+        <p class="card-text text-muted">Публикуйте вакансии и получайте отранжированных кандидатов.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
