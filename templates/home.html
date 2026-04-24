@@ -3,44 +3,60 @@
 {% block title %}EduRecruit — подбор персонала для образовательных организаций{% endblock %}
 
 {% block content %}
-<div class="p-5 mb-4 bg-primary text-white rounded-3">
-  <div class="container-fluid py-3">
-    <h1 class="display-5 fw-bold">Подбор персонала для образовательных организаций</h1>
-    <p class="col-md-8 fs-4">Найдите лучших специалистов или работу своей мечты в сфере образования.</p>
-    {% if not user.is_authenticated %}
-    <a href="{% url 'register' %}" class="btn btn-light btn-lg me-2">Зарегистрироваться</a>
-    <a href="{% url 'vacancy_list' %}" class="btn btn-outline-light btn-lg">Смотреть вакансии</a>
-    {% else %}
-    <a href="{% url 'vacancy_list' %}" class="btn btn-light btn-lg">Смотреть вакансии</a>
-    {% endif %}
+<div class="rounded-4 bg-primary text-white p-5 mb-4 shadow-sm">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <h1 class="display-6 fw-bold mb-2">Подбор персонала<br>для образовательных организаций</h1>
+      <p class="fs-5 mb-4 opacity-75">Найдите лучших специалистов или работу своей мечты в сфере образования.</p>
+      {% if not user.is_authenticated %}
+      <a href="{% url 'register' %}" class="btn btn-light btn-lg me-2 fw-semibold">Зарегистрироваться</a>
+      <a href="{% url 'vacancy_list' %}" class="btn btn-outline-light btn-lg">Смотреть вакансии</a>
+      {% else %}
+      <a href="{% url 'vacancy_list' %}" class="btn btn-light btn-lg fw-semibold">
+        <i class="bi bi-search me-1"></i>Смотреть вакансии
+      </a>
+      {% endif %}
+    </div>
+    <div class="col-md-4 text-center d-none d-md-block">
+      <i class="bi bi-mortarboard-fill" style="font-size: 8rem; opacity: .2;"></i>
+    </div>
   </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 mb-2">
   <div class="col-md-4">
-    <div class="card h-100 shadow-sm">
+    <div class="card h-100 shadow-sm rounded-4">
       <div class="card-body text-center p-4">
-        <i class="bi bi-search fs-1 text-primary"></i>
-        <h5 class="card-title mt-3">Поиск вакансий</h5>
-        <p class="card-text text-muted">Удобный поиск и фильтрация вакансий в образовательных учреждениях.</p>
+        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+             style="width:64px;height:64px">
+          <i class="bi bi-search fs-2 text-primary"></i>
+        </div>
+        <h5 class="fw-bold">Поиск вакансий</h5>
+        <p class="text-muted mb-0">Удобный поиск и фильтрация вакансий в образовательных учреждениях по городу и зарплате.</p>
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card h-100 shadow-sm">
+    <div class="card h-100 shadow-sm rounded-4">
       <div class="card-body text-center p-4">
-        <i class="bi bi-robot fs-1 text-primary"></i>
-        <h5 class="card-title mt-3">Автоматический скрининг</h5>
-        <p class="card-text text-muted">Система автоматически оценивает соответствие резюме требованиям вакансии.</p>
+        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+             style="width:64px;height:64px">
+          <i class="bi bi-robot fs-2 text-primary"></i>
+        </div>
+        <h5 class="fw-bold">Автоматический скрининг</h5>
+        <p class="text-muted mb-0">Система автоматически оценивает соответствие резюме требованиям вакансии с помощью ИИ.</p>
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card h-100 shadow-sm">
+    <div class="card h-100 shadow-sm rounded-4">
       <div class="card-body text-center p-4">
-        <i class="bi bi-building fs-1 text-primary"></i>
-        <h5 class="card-title mt-3">Для работодателей</h5>
-        <p class="card-text text-muted">Публикуйте вакансии и получайте отранжированных кандидатов.</p>
+        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+             style="width:64px;height:64px">
+          <i class="bi bi-building fs-2 text-primary"></i>
+        </div>
+        <h5 class="fw-bold">Для работодателей</h5>
+        <p class="text-muted mb-0">Публикуйте вакансии и получайте автоматически отранжированных кандидатов.</p>
       </div>
     </div>
   </div>

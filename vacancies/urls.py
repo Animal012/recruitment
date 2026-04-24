@@ -9,4 +9,5 @@ urlpatterns = [
     path('create/', views.vacancy_create, name='vacancy_create'),
     path('<int:pk>/edit/', views.vacancy_edit, name='vacancy_edit'),
     path('<int:pk>/close/', views.vacancy_close, name='vacancy_close'),
+    path('save-search/', views.save_search, name='save_search'),
 ]

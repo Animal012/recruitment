@@ -3,53 +3,92 @@
 {% block title %}{{ vacancy.title }}{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-md-8">
-    <h2>{{ vacancy.title }}</h2>
-    <p class="text-muted">
-      {% if vacancy.employer.employer_profile.organization_name %}
-        {{ vacancy.employer.employer_profile.organization_name }}
-      {% endif %}
-      {% if vacancy.city %} · {{ vacancy.city }}{% endif %}
-      · Опубликована {{ vacancy.created_at|date:"d.m.Y" }}
-    </p>
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'vacancy_list' %}">Вакансии</a></li>
+    <li class="breadcrumb-item active">{{ vacancy.title }}</li>
+  </ol>
+</nav>
 
-    {% if vacancy.salary_from or vacancy.salary_to %}
-    <p class="fs-5 text-success fw-semibold">
-      {% if vacancy.salary_from %}от {{ vacancy.salary_from|floatformat:0 }} ₽{% endif %}
-      {% if vacancy.salary_to %} до {{ vacancy.salary_to|floatformat:0 }} ₽{% endif %}
-    </p>
-    {% endif %}
+<div class="row g-4">
+  <!-- Основной контент -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm rounded-4 mb-4">
+      <div class="card-body p-4">
+        <h2 class="fw-bold mb-1">{{ vacancy.title }}</h2>
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+          {% if vacancy.employer.employer_profile.organization_name %}
+          <span class="text-muted fw-semibold">
+            <i class="bi bi-building me-1"></i>{{ vacancy.employer.employer_profile.organization_name }}
+          </span>
+          {% endif %}
+          {% if vacancy.city %}
+          <span class="badge bg-light text-dark border">
+            <i class="bi bi-geo-alt me-1"></i>{{ vacancy.city }}
+          </span>
+          {% endif %}
+          <span class="text-muted small">
+            <i class="bi bi-calendar3 me-1"></i>{{ vacancy.created_at|date:"d.m.Y" }}
+          </span>
+        </div>
 
-    <hr>
-    <h5>Описание</h5>
-    <p>{{ vacancy.description|linebreaks }}</p>
+        {% if vacancy.salary_from or vacancy.salary_to %}
+        <div class="alert alert-success d-inline-block py-2 px-3 rounded-3 mb-3">
+          <i class="bi bi-cash-stack me-1"></i>
+          <span class="fw-bold fs-5">
+            {% if vacancy.salary_from %}от {{ vacancy.salary_from|floatformat:0 }} ₽{% endif %}
+            {% if vacancy.salary_to %} до {{ vacancy.salary_to|floatformat:0 }} ₽{% endif %}
+          </span>
+        </div>
+        {% endif %}
 
-    {% if vacancy.requirements %}
-    <h5>Требования</h5>
-    <p>{{ vacancy.requirements|linebreaks }}</p>
-    {% endif %}
+        <hr>
 
-    {% if vacancy.conditions %}
-    <h5>Условия</h5>
-    <p>{{ vacancy.conditions|linebreaks }}</p>
-    {% endif %}
+        <h5 class="fw-semibold mb-2"><i class="bi bi-file-text me-2 text-primary"></i>Описание</h5>
+        <div class="text-body lh-lg mb-3">{{ vacancy.description|linebreaks }}</div>
+
+        {% if vacancy.requirements %}
+        <h5 class="fw-semibold mb-2"><i class="bi bi-check2-square me-2 text-primary"></i>Требования</h5>
+        <div class="text-body lh-lg mb-3">{{ vacancy.requirements|linebreaks }}</div>
+        {% endif %}
+
+        {% if vacancy.conditions %}
+        <h5 class="fw-semibold mb-2"><i class="bi bi-stars me-2 text-primary"></i>Условия</h5>
+        <div class="text-body lh-lg">{{ vacancy.conditions|linebreaks }}</div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
-  <div class="col-md-4">
-    <div class="card shadow-sm">
-      <div class="card-body">
+  <!-- Боковая панель -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm rounded-4 sticky-top" style="top: 1.5rem;">
+      <div class="card-body p-4">
         {% if vacancy.status == 'closed' %}
-          <div class="alert alert-secondary">Вакансия закрыта</div>
+          <div class="text-center py-2">
+            <i class="bi bi-x-circle text-secondary fs-1 mb-2 d-block"></i>
+            <p class="text-muted mb-0 fw-semibold">Вакансия закрыта</p>
+          </div>
         {% elif not user.is_authenticated %}
-          <a href="{% url 'login' %}" class="btn btn-primary w-100">Войти, чтобы откликнуться</a>
+          <p class="text-muted small mb-3">Войдите в аккаунт соискателя, чтобы откликнуться на вакансию.</p>
+          <a href="{% url 'login' %}" class="btn btn-primary w-100">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Войти
+          </a>
+          <a href="{% url 'register' %}" class="btn btn-outline-secondary w-100 mt-2">Зарегистрироваться</a>
         {% elif user.is_applicant %}
           {% if already_applied %}
-            <div class="alert alert-success mb-0">Вы уже откликнулись на эту вакансию</div>
+            <div class="text-center py-2">
+              <i class="bi bi-check-circle-fill text-success fs-1 mb-2 d-block"></i>
+              <p class="fw-semibold text-success mb-0">Вы уже откликнулись</p>
+              <a href="{% url 'my_applications' %}" class="btn btn-outline-secondary btn-sm mt-2">Мои отклики</a>
+            </div>
           {% else %}
+            <p class="text-muted small mb-3">Откликнуться на вакансию — и система автоматически оценит ваше резюме.</p>
             <form method="post" action="{% url 'apply' vacancy.pk %}">
               {% csrf_token %}
-              <button type="submit" class="btn btn-primary w-100">Откликнуться</button>
+              <button type="submit" class="btn btn-primary w-100 btn-lg">
+                <i class="bi bi-send me-1"></i>Откликнуться
+              </button>
             </form>
           {% endif %}
         {% endif %}
@@ -58,5 +97,7 @@
   </div>
 </div>
 
-<a href="{% url 'vacancy_list' %}" class="btn btn-outline-secondary mt-3">← К списку вакансий</a>
+<a href="{% url 'vacancy_list' %}" class="btn btn-outline-secondary mt-2">
+  <i class="bi bi-arrow-left me-1"></i>К списку вакансий
+</a>
 {% endblock %}

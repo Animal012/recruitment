@@ -3,38 +3,85 @@
 {% block title %}Мои отклики{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Мои отклики</h2>
+<h2 class="fw-bold mb-4">Мои отклики</h2>
 
 {% if applications %}
-<div class="table-responsive">
-  <table class="table table-hover align-middle">
-    <thead class="table-light">
-      <tr>
-        <th>Вакансия</th>
-        <th>Статус</th>
-        <th>Оценка скрининга</th>
-        <th>Дата отклика</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for app in applications %}
-      <tr>
-        <td><a href="{% url 'vacancy_detail' app.vacancy.pk %}">{{ app.vacancy.title }}</a></td>
-        <td>{{ app.get_status_display }}</td>
-        <td>
-          {% if app.screening_result %}
-            <span class="fw-semibold">{{ app.screening_result.score|floatformat:0 }}%</span>
-          {% else %}
-            <span class="text-muted">—</span>
-          {% endif %}
-        </td>
-        <td>{{ app.created_at|date:"d.m.Y" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="row g-3">
+  {% for app in applications %}
+  <div class="col-12">
+    <div class="card shadow-sm rounded-4">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+          <div class="col-md-5">
+            <a href="{% url 'vacancy_detail' app.vacancy.pk %}" class="fw-bold fs-5 text-decoration-none">
+              {{ app.vacancy.title }}
+            </a>
+            <div class="text-muted small mt-1">
+              {% if app.vacancy.employer.employer_profile.organization_name %}
+              <i class="bi bi-building me-1"></i>{{ app.vacancy.employer.employer_profile.organization_name }}
+              {% endif %}
+              {% if app.vacancy.city %}
+              <span class="ms-2"><i class="bi bi-geo-alt me-1"></i>{{ app.vacancy.city }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-3 mt-3 mt-md-0">
+            {% if app.status == 'pending' %}
+              <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                <i class="bi bi-hourglass-split me-1"></i>{{ app.get_status_display }}
+              </span>
+            {% elif app.status == 'accepted' %}
+              <span class="badge bg-success fs-6 px-3 py-2">
+                <i class="bi bi-check-circle me-1"></i>{{ app.get_status_display }}
+              </span>
+            {% elif app.status == 'rejected' %}
+              <span class="badge bg-danger fs-6 px-3 py-2">
+                <i class="bi bi-x-circle me-1"></i>{{ app.get_status_display }}
+              </span>
+            {% else %}
+              <span class="badge bg-secondary fs-6 px-3 py-2">{{ app.get_status_display }}</span>
+            {% endif %}
+          </div>
+
+          <div class="col-md-3 mt-3 mt-md-0 screening-bar">
+            {% if app.screening_result %}
+              {% with score=app.screening_result.score %}
+              <div class="small text-muted mb-1">
+                Скрининг ИИ: <strong class="
+                  {% if score >= 70 %}text-success
+                  {% elif score >= 40 %}text-warning
+                  {% else %}text-danger{% endif %}">{{ score|floatformat:0 }}%</strong>
+              </div>
+              <div class="progress">
+                <div class="progress-bar
+                  {% if score >= 70 %}bg-success
+                  {% elif score >= 40 %}bg-warning
+                  {% else %}bg-danger{% endif %}"
+                  style="width: {{ score|floatformat:0 }}%"></div>
+              </div>
+              {% endwith %}
+            {% else %}
+              <span class="text-muted small"><i class="bi bi-hourglass me-1"></i>Скрининг в процессе...</span>
+            {% endif %}
+          </div>
+
+          <div class="col-md-1 mt-3 mt-md-0 text-muted small text-end">
+            {{ app.created_at|date:"d.m.Y" }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 {% else %}
-  <div class="alert alert-info">Вы ещё не откликались на вакансии. <a href="{% url 'vacancy_list' %}">Найти вакансии</a>.</div>
+<div class="card shadow-sm rounded-4">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+    <h5 class="mt-3 text-muted">Вы ещё не откликались на вакансии</h5>
+    <a href="{% url 'vacancy_list' %}" class="btn btn-primary mt-2">Найти вакансии</a>
+  </div>
+</div>
 {% endif %}
 {% endblock %}

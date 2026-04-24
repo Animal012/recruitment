@@ -116,11 +116,11 @@ class WorkExperienceForm(forms.ModelForm):
 EducationFormSet = inlineformset_factory(
     ApplicantProfile, Education,
     form=EducationForm,
-    extra=1, can_delete=True,
+    extra=0, can_delete=True,
 )
 
 WorkExperienceFormSet = inlineformset_factory(
     ApplicantProfile, WorkExperience,
     form=WorkExperienceForm,
-    extra=1, can_delete=True,
+    extra=0, can_delete=True,
 )

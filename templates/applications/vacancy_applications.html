@@ -5,69 +5,97 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
-    <h2 class="mb-0">Отклики на вакансию</h2>
-    <p class="text-muted mb-0">{{ vacancy.title }}</p>
+    <h2 class="fw-bold mb-0">Отклики на вакансию</h2>
+    <p class="text-muted mb-0"><i class="bi bi-briefcase me-1"></i>{{ vacancy.title }}</p>
   </div>
-  <a href="{% url 'my_vacancies' %}" class="btn btn-outline-secondary">← Мои вакансии</a>
+  <a href="{% url 'my_vacancies' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Мои вакансии
+  </a>
 </div>
 
 {% if applications %}
-<div class="table-responsive">
-  <table class="table table-hover align-middle">
-    <thead class="table-light">
-      <tr>
-        <th>Кандидат</th>
-        <th>Город</th>
-        <th class="text-center">Оценка скрининга</th>
-        <th>Статус</th>
-        <th>Дата отклика</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for app in applications %}
-      <tr>
-        <td>
-          {{ app.applicant.get_full_name|default:app.applicant.username }}
-          {% if app.cover_letter %}
-          <br><small class="text-muted">{{ app.cover_letter|truncatechars:60 }}</small>
-          {% endif %}
-        </td>
-        <td>
-          {% if app.applicant.applicant_profile.city %}
-            {{ app.applicant.applicant_profile.city }}
-          {% else %}—{% endif %}
-        </td>
-        <td class="text-center">
-          {% if app.screening_result %}
-            {% with score=app.screening_result.score %}
-            <span class="badge fs-6 {% if score >= 70 %}bg-success{% elif score >= 40 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-              {{ score|floatformat:0 }}%
-            </span>
-            {% endwith %}
-          {% else %}
-            <span class="text-muted">—</span>
-          {% endif %}
-        </td>
-        <td>{{ app.get_status_display }}</td>
-        <td>{{ app.created_at|date:"d.m.Y" }}</td>
-        <td>
-          <form method="post" action="{% url 'change_status' app.pk %}" class="d-flex gap-1">
-            {% csrf_token %}
-            <select name="status" class="form-select form-select-sm" style="width:auto">
-              {% for val, label in app.STATUS_CHOICES %}
-              <option value="{{ val }}" {% if val == app.status %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-            <button type="submit" class="btn btn-sm btn-outline-primary">Сохранить</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="row g-3">
+  {% for app in applications %}
+  <div class="col-12">
+    <div class="card shadow-sm rounded-4">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+
+          <!-- Кандидат -->
+          <div class="col-md-3">
+            <div class="fw-semibold">
+              <i class="bi bi-person-circle me-1 text-muted"></i>
+              {{ app.applicant.get_full_name|default:app.applicant.username }}
+            </div>
+            {% if app.applicant.applicant_profile.city %}
+            <div class="text-muted small mt-1">
+              <i class="bi bi-geo-alt me-1"></i>{{ app.applicant.applicant_profile.city }}
+            </div>
+            {% endif %}
+            {% if app.cover_letter %}
+            <div class="text-muted small mt-1 fst-italic">{{ app.cover_letter|truncatechars:60 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Оценка скрининга -->
+          <div class="col-md-4 mt-3 mt-md-0 screening-bar">
+            {% if app.screening_result %}
+              {% with score=app.screening_result.score %}
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge fs-6 px-3 py-2
+                  {% if score >= 70 %}bg-success
+                  {% elif score >= 40 %}bg-warning text-dark
+                  {% else %}bg-danger{% endif %}">
+                  {{ score|floatformat:0 }}%
+                </span>
+                <span class="text-muted small">Соответствие резюме</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar
+                  {% if score >= 70 %}bg-success
+                  {% elif score >= 40 %}bg-warning
+                  {% else %}bg-danger{% endif %}"
+                  style="width: {{ score|floatformat:0 }}%"></div>
+              </div>
+              {% endwith %}
+            {% else %}
+              <span class="text-muted small"><i class="bi bi-hourglass me-1"></i>Скрининг выполняется...</span>
+            {% endif %}
+          </div>
+
+          <!-- Статус + дата -->
+          <div class="col-md-2 mt-3 mt-md-0">
+            <div class="text-muted small">{{ app.get_status_display }}</div>
+            <div class="text-muted small">{{ app.created_at|date:"d.m.Y" }}</div>
+          </div>
+
+          <!-- Управление статусом -->
+          <div class="col-md-3 mt-3 mt-md-0">
+            <form method="post" action="{% url 'change_status' app.pk %}" class="d-flex gap-2">
+              {% csrf_token %}
+              <select name="status" class="form-select form-select-sm">
+                {% for val, label in app.STATUS_CHOICES %}
+                <option value="{{ val }}" {% if val == app.status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-check"></i>
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 {% else %}
-  <div class="alert alert-info">На эту вакансию пока нет откликов.</div>
+<div class="card shadow-sm rounded-4">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+    <h5 class="mt-3 text-muted">На эту вакансию пока нет откликов</h5>
+  </div>
+</div>
 {% endif %}
 {% endblock %}

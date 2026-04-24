@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -10,6 +12,18 @@ from .forms import VacancyForm
 from .models import SearchHistory, Vacancy
 
 
+def _ci_regex(s):
+    """Build a case-insensitive regex pattern without relying on locale."""
+    parts = []
+    for ch in s:
+        lo, hi = ch.lower(), ch.upper()
+        if lo != hi:
+            parts.append(f'[{lo}{hi}]')
+        else:
+            parts.append(re.escape(ch))
+    return ''.join(parts)
+
+
 def vacancy_list(request):
     qs = Vacancy.objects.filter(status=Vacancy.OPEN).select_related('employer__employer_profile')
     query = request.GET.get('q', '').strip()
@@ -17,7 +31,10 @@ def vacancy_list(request):
     salary_from = request.GET.get('salary_from', '').strip()
 
     if query:
-        qs = qs.filter(Q(title__icontains=query) | Q(description__icontains=query) | Q(requirements__icontains=query))
+        pat = _ci_regex(query)
+        qs = qs.filter(
+            Q(title__regex=pat) | Q(description__regex=pat) | Q(requirements__regex=pat)
+        )
     if city:
         qs = qs.filter(city__icontains=city)
     if salary_from.isdigit():
@@ -104,3 +121,14 @@ def vacancy_close(request, pk):
     vacancy.save()
     messages.success(request, 'Вакансия закрыта.')
     return redirect('my_vacancies')
+
+
+@require_POST
+@login_required
+def save_search(request):
+    if not request.user.is_applicant():
+        return JsonResponse({'ok': False})
+    query = request.POST.get('query', '').strip()
+    if query:
+        SearchHistory.objects.create(user=request.user, query=query)
+    return JsonResponse({'ok': True})
