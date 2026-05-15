@@ -11,7 +11,10 @@ def _get_model():
     if _model is None:
         with _model_lock:
             if _model is None:
-                _model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+                _model = SentenceTransformer(
+                    'paraphrase-multilingual-MiniLM-L12-v2',
+                    local_files_only=True,
+                )
     return _model
 
 

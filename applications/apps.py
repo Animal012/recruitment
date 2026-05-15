@@ -8,7 +8,9 @@ class ApplicationsConfig(AppConfig):
     name = 'applications'
 
     def ready(self):
-        # RUN_MAIN=true только в основном процессе, не в reloader-е
+        os.environ.setdefault('HF_HUB_OFFLINE', '1')
+        os.environ.setdefault('TRANSFORMERS_OFFLINE', '1')
+
         if os.environ.get('RUN_MAIN') != 'true':
             return
 
