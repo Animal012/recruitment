@@ -56,17 +56,11 @@ class ApplicantProfileForm(forms.ModelForm):
                 field.widget.attrs['class'] = 'form-control'
 
 
-class ResumeUploadForm(forms.ModelForm):
-    class Meta:
-        model = ApplicantProfile
-        fields = ('resume_file',)
-        widgets = {
-            'resume_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['resume_file'].required = False
+class ResumeUploadForm(forms.Form):
+    resume_file = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
+    )
 
 
 class EmployerProfileForm(forms.ModelForm):

@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
 from .forms import (
@@ -112,9 +113,11 @@ def upload_resume(request):
         messages.error(request, 'Допускается только PDF-файл.')
         return redirect('applicant_profile')
 
-    profile_obj.resume_file = pdf_file
-    profile_obj.resume_text = extract_pdf_text(pdf_file)
-    profile_obj.save(update_fields=['resume_file', 'resume_text'])
+    data = pdf_file.read()
+    profile_obj.resume_data = data
+    profile_obj.resume_filename = pdf_file.name
+    profile_obj.resume_text = extract_pdf_text(data)
+    profile_obj.save(update_fields=['resume_data', 'resume_filename', 'resume_text'])
     messages.success(request, 'Резюме загружено, текст извлечён.')
     return redirect('applicant_profile')
 
@@ -125,13 +128,26 @@ def delete_resume(request):
         return redirect('applicant_profile')
 
     profile_obj = request.user.applicant_profile
-    if profile_obj.resume_file:
-        profile_obj.resume_file.delete(save=False)
-    profile_obj.resume_file = None
+    profile_obj.resume_data = None
+    profile_obj.resume_filename = ''
     profile_obj.resume_text = ''
-    profile_obj.save(update_fields=['resume_file', 'resume_text'])
+    profile_obj.save(update_fields=['resume_data', 'resume_filename', 'resume_text'])
     messages.success(request, 'Резюме удалено.')
     return redirect('applicant_profile')
+
+
+@login_required
+def download_resume(request):
+    if not request.user.is_applicant():
+        return redirect('home')
+    profile_obj = request.user.applicant_profile
+    if not profile_obj.resume_data:
+        messages.error(request, 'Резюме не загружено.')
+        return redirect('applicant_profile')
+    filename = profile_obj.resume_filename or 'resume.pdf'
+    response = HttpResponse(bytes(profile_obj.resume_data), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
 
 
 @login_required

@@ -11,6 +11,7 @@ urlpatterns = [
     path('profile/applicant/', views.applicant_profile, name='applicant_profile'),
     path('profile/applicant/resume/', views.upload_resume, name='upload_resume'),
     path('profile/applicant/resume/delete/', views.delete_resume, name='delete_resume'),
+    path('profile/applicant/resume/download/', views.download_resume, name='download_resume'),
     path('profile/employer/', views.employer_profile, name='employer_profile'),
 ]
 
@@ -23,5 +24,6 @@ api_urlpatterns = [
     path('profile/applicant/', api_views.api_applicant_profile, name='api_applicant_profile'),
     path('profile/applicant/resume/', api_views.api_upload_resume, name='api_upload_resume'),
     path('profile/applicant/resume/delete/', api_views.api_delete_resume, name='api_delete_resume'),
+    path('profile/applicant/resume/download/', api_views.api_download_resume, name='api_download_resume'),
     path('profile/employer/', api_views.api_employer_profile, name='api_employer_profile'),
 ]

@@ -103,7 +103,7 @@ def api_applicant_profile(request):
             'phone': profile.phone,
             'city': profile.city,
             'about': profile.about,
-            'resume_file': profile.resume_file.url if profile.resume_file else None,
+            'resume_file': '/api/auth/profile/applicant/resume/download/' if profile.resume_data else None,
             'educations': educations,
             'experiences': experiences,
         })
@@ -192,10 +192,12 @@ def api_upload_resume(request):
         return JsonResponse({'error': 'Файл не передан'}, status=400)
     if not pdf_file.name.lower().endswith('.pdf'):
         return JsonResponse({'error': 'Только PDF'}, status=400)
-    profile.resume_file = pdf_file
-    profile.resume_text = extract_pdf_text(pdf_file)
-    profile.save(update_fields=['resume_file', 'resume_text'])
-    return JsonResponse({'url': profile.resume_file.url})
+    data = pdf_file.read()
+    profile.resume_data = data
+    profile.resume_filename = pdf_file.name
+    profile.resume_text = extract_pdf_text(data)
+    profile.save(update_fields=['resume_data', 'resume_filename', 'resume_text'])
+    return JsonResponse({'url': '/api/auth/profile/applicant/resume/download/'})
 
 
 @require_http_methods(['POST'])
@@ -203,12 +205,26 @@ def api_delete_resume(request):
     if not request.user.is_authenticated or not request.user.is_applicant():
         return JsonResponse({'error': 'Forbidden'}, status=403)
     profile = request.user.applicant_profile
-    if profile.resume_file:
-        profile.resume_file.delete(save=False)
-    profile.resume_file = None
+    profile.resume_data = None
+    profile.resume_filename = ''
     profile.resume_text = ''
-    profile.save(update_fields=['resume_file', 'resume_text'])
+    profile.save(update_fields=['resume_data', 'resume_filename', 'resume_text'])
     return JsonResponse({'ok': True})
+
+
+from django.http import HttpResponse
+
+@require_http_methods(['GET'])
+def api_download_resume(request):
+    if not request.user.is_authenticated or not request.user.is_applicant():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    profile = request.user.applicant_profile
+    if not profile.resume_data:
+        return JsonResponse({'error': 'Резюме не загружено'}, status=404)
+    filename = profile.resume_filename or 'resume.pdf'
+    response = HttpResponse(bytes(profile.resume_data), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
 
 
 def api_employer_profile(request):

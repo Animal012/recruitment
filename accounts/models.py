@@ -30,7 +30,8 @@ class ApplicantProfile(models.Model):
     phone = models.CharField(max_length=20, blank=True, verbose_name='Телефон')
     city = models.CharField(max_length=100, blank=True, verbose_name='Город')
     about = models.TextField(blank=True, verbose_name='О себе')
-    resume_file = models.FileField(upload_to='resumes/', blank=True, null=True, verbose_name='Файл резюме')
+    resume_data = models.BinaryField(blank=True, null=True, verbose_name='Файл резюме (байты)')
+    resume_filename = models.CharField(max_length=255, blank=True, verbose_name='Имя файла резюме')
     resume_text = models.TextField(blank=True, verbose_name='Текст резюме')
 
     class Meta:
