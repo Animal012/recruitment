@@ -1,19 +1,6 @@
 from django.urls import path
 
-from . import views
 from . import api_views
-
-urlpatterns = [
-    path('register/', views.register, name='register'),
-    path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('logout/', views.logout_view, name='logout'),
-    path('profile/', views.profile, name='profile'),
-    path('profile/applicant/', views.applicant_profile, name='applicant_profile'),
-    path('profile/applicant/resume/', views.upload_resume, name='upload_resume'),
-    path('profile/applicant/resume/delete/', views.delete_resume, name='delete_resume'),
-    path('profile/applicant/resume/download/', views.download_resume, name='download_resume'),
-    path('profile/employer/', views.employer_profile, name='employer_profile'),
-]
 
 api_urlpatterns = [
     path('csrf/', api_views.csrf_view, name='api_csrf'),
@@ -26,4 +13,7 @@ api_urlpatterns = [
     path('profile/applicant/resume/delete/', api_views.api_delete_resume, name='api_delete_resume'),
     path('profile/applicant/resume/download/', api_views.api_download_resume, name='api_download_resume'),
     path('profile/employer/', api_views.api_employer_profile, name='api_employer_profile'),
+    path('settings/', api_views.api_account_settings, name='api_account_settings'),
+    path('applicant/<int:pk>/', api_views.api_applicant_view, name='api_applicant_view'),
+    path('applicant/<int:pk>/resume/', api_views.api_applicant_resume, name='api_applicant_resume'),
 ]

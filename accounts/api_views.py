@@ -28,14 +28,21 @@ def me(request):
     if not request.user.is_authenticated:
         return JsonResponse({'authenticated': False}, status=401)
     u = request.user
+    first_name, last_name = '', ''
+    if u.is_applicant():
+        try:
+            first_name = u.applicant_profile.first_name
+            last_name = u.applicant_profile.last_name
+        except Exception:
+            pass
     data = {
         'authenticated': True,
         'id': u.id,
         'username': u.username,
         'email': u.email,
-        'first_name': u.first_name,
-        'last_name': u.last_name,
-        'full_name': u.get_full_name(),
+        'first_name': first_name,
+        'last_name': last_name,
+        'full_name': f'{first_name} {last_name}'.strip() or u.username,
         'role': u.role,
     }
     return JsonResponse(data)
@@ -50,12 +57,7 @@ def api_login(request):
     if user is None:
         return JsonResponse({'error': 'Неверный логин или пароль'}, status=400)
     login(request, user)
-    return JsonResponse({
-        'id': user.id,
-        'username': user.username,
-        'role': user.role,
-        'full_name': user.get_full_name(),
-    })
+    return JsonResponse({'id': user.id, 'username': user.username, 'role': user.role})
 
 
 @require_http_methods(['POST'])
@@ -69,9 +71,14 @@ def api_register(request):
     body = json_body(request)
     form = RegisterForm(body)
     if form.is_valid():
-        user = form.save()
+        user = form.save(commit=False)
+        user.save()
         if user.role == 'applicant':
-            ApplicantProfile.objects.create(user=user)
+            ApplicantProfile.objects.create(
+                user=user,
+                first_name=body.get('first_name', '').strip(),
+                last_name=body.get('last_name', '').strip(),
+            )
         else:
             EmployerProfile.objects.create(user=user, organization_name='')
         login(request, user)
@@ -98,7 +105,8 @@ def api_applicant_profile(request):
             if e['end_date']:
                 e['end_date'] = str(e['end_date'])
         return JsonResponse({
-            'photo': profile.photo.url if profile.photo else None,
+            'first_name': profile.first_name,
+            'last_name': profile.last_name,
             'birth_date': str(profile.birth_date) if profile.birth_date else '',
             'phone': profile.phone,
             'city': profile.city,
@@ -110,14 +118,14 @@ def api_applicant_profile(request):
 
     if request.method == 'POST':
         data = request.POST
+        profile.first_name = data.get('first_name', profile.first_name)
+        profile.last_name = data.get('last_name', profile.last_name)
         profile.phone = data.get('phone', profile.phone)
         profile.city = data.get('city', profile.city)
         profile.about = data.get('about', profile.about)
         birth_date = data.get('birth_date', '')
         if birth_date:
             profile.birth_date = birth_date
-        if 'photo' in request.FILES:
-            profile.photo = request.FILES['photo']
         profile.save()
 
         # education
@@ -214,6 +222,53 @@ def api_delete_resume(request):
 
 from django.http import HttpResponse
 
+
+@require_http_methods(['GET'])
+def api_applicant_view(request, pk):
+    if not request.user.is_authenticated or not request.user.is_employer():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    from django.shortcuts import get_object_or_404
+    from accounts.models import User
+    applicant = get_object_or_404(User, pk=pk, role='applicant')
+    try:
+        profile = applicant.applicant_profile
+    except ApplicantProfile.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    educations = list(profile.educations.values('institution', 'degree', 'field_of_study', 'start_year', 'end_year'))
+    experiences = list(profile.experiences.values('company', 'position', 'start_date', 'end_date', 'is_current', 'description'))
+    for e in experiences:
+        if e['start_date']: e['start_date'] = str(e['start_date'])
+        if e['end_date']: e['end_date'] = str(e['end_date'])
+    return JsonResponse({
+        'username': applicant.username,
+        'first_name': profile.first_name,
+        'last_name': profile.last_name,
+        'city': profile.city,
+        'phone': profile.phone,
+        'about': profile.about,
+        'birth_date': str(profile.birth_date) if profile.birth_date else '',
+        'has_resume': bool(profile.resume_data),
+        'educations': educations,
+        'experiences': experiences,
+    })
+
+
+@require_http_methods(['GET'])
+def api_applicant_resume(request, pk):
+    if not request.user.is_authenticated or not request.user.is_employer():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    from django.shortcuts import get_object_or_404
+    from accounts.models import User
+    applicant = get_object_or_404(User, pk=pk, role='applicant')
+    profile = applicant.applicant_profile
+    if not profile.resume_data:
+        return JsonResponse({'error': 'Резюме не загружено'}, status=404)
+    filename = profile.resume_filename or 'resume.pdf'
+    response = HttpResponse(bytes(profile.resume_data), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+
 @require_http_methods(['GET'])
 def api_download_resume(request):
     if not request.user.is_authenticated or not request.user.is_applicant():
@@ -225,6 +280,46 @@ def api_download_resume(request):
     response = HttpResponse(bytes(profile.resume_data), content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="{filename}"'
     return response
+
+
+@require_http_methods(['POST'])
+def api_account_settings(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    body = json_body(request)
+    user = request.user
+    errors = {}
+
+    new_username = body.get('username', '').strip()
+    new_email = body.get('email', '').strip()
+    new_password = body.get('new_password', '')
+    new_password2 = body.get('new_password2', '')
+
+    if new_username and new_username != user.username:
+        from django.contrib.auth import get_user_model
+        if get_user_model().objects.filter(username=new_username).exclude(pk=user.pk).exists():
+            errors['username'] = 'Этот логин уже занят'
+        else:
+            user.username = new_username
+
+    if new_email and new_email != user.email:
+        user.email = new_email
+
+    if new_password:
+        if len(new_password) < 8:
+            errors['new_password'] = 'Пароль должен содержать минимум 8 символов'
+        elif new_password != new_password2:
+            errors['new_password2'] = 'Пароли не совпадают'
+        else:
+            user.set_password(new_password)
+
+    if errors:
+        return JsonResponse({'errors': errors}, status=400)
+
+    user.save()
+    from django.contrib.auth import update_session_auth_hash
+    update_session_auth_hash(request, user)
+    return JsonResponse({'ok': True, 'username': user.username, 'email': user.email})
 
 
 def api_employer_profile(request):

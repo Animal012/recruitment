@@ -25,10 +25,10 @@ const EMPTY_EDU = () => ({ id: null, institution: '', degree: '', field_of_study
 const EMPTY_EXP = () => ({ id: null, company: '', position: '', start_date: '', end_date: '', is_current: false, description: '' });
 
 export default function ApplicantProfile() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
-  const [form, setForm] = useState({ phone: '', city: '', about: '', birth_date: '' });
+  const [form, setForm] = useState({ first_name: '', last_name: '', phone: '', city: '', about: '', birth_date: '' });
   const [educations, setEducations] = useState([]);
   const [experiences, setExperiences] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -37,16 +37,17 @@ export default function ApplicantProfile() {
   const fileRef = useRef();
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || user.role !== 'applicant') { navigate('/'); return; }
     apiJson('/api/auth/profile/applicant/')
       .then((d) => {
         setProfile(d);
-        setForm({ phone: d.phone || '', city: d.city || '', about: d.about || '', birth_date: d.birth_date || '' });
+        setForm({ first_name: d.first_name || '', last_name: d.last_name || '', phone: d.phone || '', city: d.city || '', about: d.about || '', birth_date: d.birth_date || '' });
         setEducations(d.educations.map((e) => ({ ...e, start_year: String(e.start_year || ''), end_year: String(e.end_year || '') })));
         setExperiences(d.experiences.map((e) => ({ ...e, start_date: e.start_date || '', end_date: e.end_date || '' })));
       })
       .catch(() => navigate('/'));
-  }, [user]);
+  }, [user, authLoading]);
 
   const setEdu = (i, field) => (e) =>
     setEducations((prev) => prev.map((row, idx) => idx === i ? { ...row, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value } : row));
@@ -60,6 +61,8 @@ export default function ApplicantProfile() {
     setSaved(false);
     try {
       const fd = new FormData();
+      fd.append('first_name', form.first_name);
+      fd.append('last_name', form.last_name);
       fd.append('phone', form.phone);
       fd.append('city', form.city);
       fd.append('about', form.about);
@@ -133,15 +136,13 @@ export default function ApplicantProfile() {
           {/* Avatar */}
           <div className="bg-white rounded-2xl border border-slate-100 p-5 text-center">
             <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-3">
-              {profile.photo ? (
-                <img src={profile.photo} className="w-20 h-20 rounded-full object-cover" alt="" />
-              ) : (
-                <span className="text-2xl font-bold text-indigo-600">
-                  {(user?.first_name?.[0] || user?.username?.[0] || '?').toUpperCase()}
-                </span>
-              )}
+              <span className="text-2xl font-bold text-indigo-600">
+                {(user?.username?.[0] || '?').toUpperCase()}
+              </span>
             </div>
-            <div className="font-semibold text-slate-800">{user?.full_name || user?.username}</div>
+            <div className="font-semibold text-slate-800">
+              {user?.username}
+            </div>
             <div className="text-xs text-slate-400 mt-0.5">Соискатель</div>
           </div>
 
@@ -202,6 +203,12 @@ export default function ApplicantProfile() {
             <div className="bg-white rounded-2xl border border-slate-100 p-6">
               <h2 className="font-semibold text-slate-900 mb-4">Личные данные</h2>
               <div className="grid grid-cols-2 gap-4">
+                <Field label="Имя">
+                  <input value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} className={INPUT} placeholder="Иван" />
+                </Field>
+                <Field label="Фамилия">
+                  <input value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} className={INPUT} placeholder="Иванов" />
+                </Field>
                 <Field label="Телефон">
                   <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={INPUT} placeholder="+7 (999) 000-00-00" />
                 </Field>

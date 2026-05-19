@@ -6,14 +6,19 @@ from .models import ApplicantProfile, Education, EmployerProfile, User, WorkExpe
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    fieldsets = BaseUserAdmin.fieldsets + (
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Контакты', {'fields': ('email',)}),
         ('Роль', {'fields': ('role',)}),
+        ('Права', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
+        ('Даты', {'fields': ('last_login', 'date_joined')}),
     )
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Роль', {'fields': ('role',)}),
+    add_fieldsets = (
+        (None, {'classes': ('wide',), 'fields': ('username', 'email', 'role', 'password1', 'password2')}),
     )
+    filter_horizontal = ()
     list_display = ('username', 'email', 'role', 'is_staff')
-    list_filter = ('role',) + BaseUserAdmin.list_filter
+    list_filter = ('role', 'is_staff', 'is_superuser', 'is_active')
 
 
 class EducationInline(admin.TabularInline):

@@ -44,15 +44,19 @@ export default function Layout({ children }) {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            <NavItem to="/vacancies">Вакансии</NavItem>
-            {user?.role === 'employer' && (
+            {user?.role === 'employer' ? (
               <>
                 <NavItem to="/my-vacancies">Мои вакансии</NavItem>
-                <NavItem to="/vacancies/create">Создать вакансию</NavItem>
+                <NavItem to="/employer-applications">Отклики на вакансии</NavItem>
+                <NavItem to="/vacancies">Все вакансии</NavItem>
               </>
-            )}
-            {user?.role === 'applicant' && (
-              <NavItem to="/applications">Мои отклики</NavItem>
+            ) : (
+              <>
+                <NavItem to="/vacancies">Вакансии</NavItem>
+                {user?.role === 'applicant' && (
+                  <NavItem to="/applications">Мои отклики</NavItem>
+                )}
+              </>
             )}
           </nav>
 
@@ -65,11 +69,11 @@ export default function Layout({ children }) {
                 >
                   <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
                     <span className="text-sm font-semibold text-indigo-700">
-                      {(user.first_name?.[0] || user.username?.[0] || '?').toUpperCase()}
+                      {(user.username?.[0] || '?').toUpperCase()}
                     </span>
                   </div>
                   <span className="text-sm font-medium text-slate-700 hidden sm:block">
-                    {user.first_name || user.username}
+                    {user.username}
                   </span>
                   <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -89,6 +93,17 @@ export default function Layout({ children }) {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       Профиль
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Настройки аккаунта
                     </Link>
                     <hr className="my-1 border-slate-100" />
                     <button

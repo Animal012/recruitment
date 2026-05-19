@@ -47,7 +47,10 @@ function VacancyCard({ v }) {
 }
 
 export default function VacancyList() {
-  const [data, setData] = useState({ results: [], num_pages: 1, page: 1, cities: [], recent_queries: [] });
+  const [data, setData] = useState({ results: [], num_pages: 1, page: 1, cities: [] });
+  const [recentQueries, setRecentQueries] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('search_history') || '[]'); } catch { return []; }
+  });
   const [q, setQ] = useState('');
   const [city, setCity] = useState('');
   const [salaryFrom, setSalaryFrom] = useState('');
@@ -94,8 +97,13 @@ export default function VacancyList() {
               value={q}
               onChange={(e) => debounce({ q: e.target.value })}
               onBlur={() => {
-                if (q.trim()) {
-                  apiJson('/api/vacancies/save-search/', { method: 'POST', body: JSON.stringify({ query: q }) }).catch(() => {});
+                const val = q.trim();
+                if (val) {
+                  setRecentQueries((prev) => {
+                    const next = [val, ...prev.filter((x) => x !== val)].slice(0, 20);
+                    localStorage.setItem('search_history', JSON.stringify(next));
+                    return next;
+                  });
                 }
               }}
               list="search-history"
@@ -103,7 +111,7 @@ export default function VacancyList() {
               className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
             <datalist id="search-history">
-              {data.recent_queries.map((rq) => <option key={rq} value={rq} />)}
+              {recentQueries.map((rq) => <option key={rq} value={rq} />)}
             </datalist>
           </div>
           <select

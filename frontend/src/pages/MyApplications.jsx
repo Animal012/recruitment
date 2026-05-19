@@ -11,35 +11,20 @@ const STATUS_STYLE = {
   rejected:  'bg-red-50 text-red-600',
 };
 
-function ScreeningBar({ score }) {
-  const pct = Math.round(score);
-  const color = pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-400' : 'bg-red-400';
-  const textColor = pct >= 70 ? 'text-emerald-700' : pct >= 40 ? 'text-amber-700' : 'text-red-600';
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-slate-400">Соответствие резюме</span>
-        <span className={`text-xs font-bold ${textColor}`}>{pct}%</span>
-      </div>
-      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-}
 
 export default function MyApplications() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || user.role !== 'applicant') { navigate('/'); return; }
     apiJson('/api/applications/')
       .then((d) => setApps(d.results))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, authLoading]);
 
   if (loading) return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
@@ -81,20 +66,6 @@ export default function MyApplications() {
                   <span className="text-xs text-slate-300">{app.created_at}</span>
                 </div>
               </div>
-              {app.screening
-                ? <ScreeningBar score={app.screening.score} />
-                : <p className="text-xs text-slate-300 flex items-center gap-1">
-                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Скрининг выполняется...
-                  </p>
-              }
-              {app.cover_letter && (
-                <p className="text-xs text-slate-400 mt-2 italic border-t border-slate-50 pt-2 truncate">
-                  «{app.cover_letter}»
-                </p>
-              )}
             </div>
           ))}
         </div>

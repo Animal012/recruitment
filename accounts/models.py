@@ -11,6 +11,10 @@ class User(AbstractUser):
     ]
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name='Роль')
+    first_name = None
+    last_name = None
+    groups = None
+    user_permissions = None
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -25,7 +29,8 @@ class User(AbstractUser):
 
 class ApplicantProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='applicant_profile')
-    photo = models.ImageField(upload_to='photos/', blank=True, null=True, verbose_name='Фотография')
+    first_name = models.CharField(max_length=150, blank=True, verbose_name='Имя')
+    last_name = models.CharField(max_length=150, blank=True, verbose_name='Фамилия')
     birth_date = models.DateField(blank=True, null=True, verbose_name='Дата рождения')
     phone = models.CharField(max_length=20, blank=True, verbose_name='Телефон')
     city = models.CharField(max_length=100, blank=True, verbose_name='Город')
@@ -38,8 +43,8 @@ class ApplicantProfile(models.Model):
         verbose_name = 'Профиль соискателя'
         verbose_name_plural = 'Профили соискателей'
 
-    def __str__(self):
-        return f'Профиль соискателя: {self.user.get_full_name() or self.user.username}'
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'.strip() or self.user.username
 
 
 class Education(models.Model):

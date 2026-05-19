@@ -5,8 +5,6 @@ import { useAuth } from '../context/AuthContext';
 const FIELDS = [
   { name: 'username', label: 'Имя пользователя', type: 'text', placeholder: 'username' },
   { name: 'email', label: 'Email', type: 'email', placeholder: 'you@example.com' },
-  { name: 'first_name', label: 'Имя', type: 'text', placeholder: 'Иван' },
-  { name: 'last_name', label: 'Фамилия', type: 'text', placeholder: 'Иванов' },
   { name: 'password1', label: 'Пароль', type: 'password', placeholder: '••••••••' },
   { name: 'password2', label: 'Пароль ещё раз', type: 'password', placeholder: '••••••••' },
 ];
@@ -15,8 +13,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    username: '', email: '', first_name: '', last_name: '',
-    password1: '', password2: '', role: 'applicant',
+    username: '', email: '', password1: '', password2: '', role: 'applicant',
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);

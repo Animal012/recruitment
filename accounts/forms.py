@@ -7,13 +7,11 @@ from .models import ApplicantProfile, Education, EmployerProfile, User, WorkExpe
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, label='Email')
-    first_name = forms.CharField(max_length=150, required=True, label='Имя')
-    last_name = forms.CharField(max_length=150, required=True, label='Фамилия')
     role = forms.ChoiceField(choices=User.ROLE_CHOICES, label='Роль')
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'password1', 'password2')
+        fields = ('username', 'email', 'role', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -23,8 +21,8 @@ class RegisterForm(UserCreationForm):
         self.fields['password1'].help_text = 'Пароль должен содержать не менее 8 символов и не быть слишком простым.'
         self.fields['password2'].label = 'Подтверждение пароля'
         self.fields['password2'].help_text = 'Введите пароль повторно для подтверждения.'
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
+        for f in self.fields.values():
+            f.widget.attrs['class'] = 'form-control'
 
 
 class LoginForm(AuthenticationForm):
@@ -39,7 +37,7 @@ class LoginForm(AuthenticationForm):
 class ApplicantProfileForm(forms.ModelForm):
     class Meta:
         model = ApplicantProfile
-        fields = ('photo', 'birth_date', 'phone', 'city', 'about')
+        fields = ('first_name', 'last_name', 'birth_date', 'phone', 'city', 'about')
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
             'about': forms.Textarea(attrs={'rows': 4}),
@@ -47,7 +45,7 @@ class ApplicantProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
+        for field in self.fields.values():
             if isinstance(field.widget, forms.CheckboxInput):
                 continue
             if isinstance(field.widget, forms.FileInput):
@@ -100,11 +98,11 @@ class WorkExperienceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            if isinstance(field.widget, forms.CheckboxInput):
-                field.widget.attrs['class'] = 'form-check-input'
+        for f in self.fields.values():
+            if isinstance(f.widget, forms.CheckboxInput):
+                f.widget.attrs['class'] = 'form-check-input'
             else:
-                field.widget.attrs['class'] = 'form-control'
+                f.widget.attrs['class'] = 'form-control'
 
 
 EducationFormSet = inlineformset_factory(

@@ -14,18 +14,19 @@ function StatusBadge({ status }) {
 }
 
 export default function MyVacancies() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || user.role !== 'employer') { navigate('/'); return; }
     apiJson('/api/vacancies/my/')
       .then((d) => setVacancies(d.results))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, authLoading]);
 
   const close = async (id) => {
     if (!confirm('Закрыть вакансию?')) return;
@@ -33,6 +34,16 @@ export default function MyVacancies() {
     try {
       await apiJson(`/api/vacancies/${id}/close/`, { method: 'POST' });
       setVacancies((vs) => vs.map((v) => v.id === id ? { ...v, status: 'closed' } : v));
+    } finally {
+      setClosing(null);
+    }
+  };
+
+  const reopen = async (id) => {
+    setClosing(id);
+    try {
+      await apiJson(`/api/vacancies/${id}/reopen/`, { method: 'POST' });
+      setVacancies((vs) => vs.map((v) => v.id === id ? { ...v, status: 'open' } : v));
     } finally {
       setClosing(null);
     }
@@ -106,7 +117,7 @@ export default function MyVacancies() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </Link>
-                  {v.status === 'open' && (
+                  {v.status === 'open' ? (
                     <button
                       onClick={() => close(v.id)}
                       disabled={closing === v.id}
@@ -115,6 +126,17 @@ export default function MyVacancies() {
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => reopen(v.id)}
+                      disabled={closing === v.id}
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-40"
+                      title="Открыть вакансию"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </button>
                   )}

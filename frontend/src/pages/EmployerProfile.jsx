@@ -15,13 +15,14 @@ function Field({ label, children }) {
 }
 
 export default function EmployerProfile() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ organization_name: '', address: '', phone: '', website: '', description: '' });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || user.role !== 'employer') { navigate('/'); return; }
     apiJson('/api/auth/profile/employer/')
       .then((d) => setForm({
@@ -32,7 +33,7 @@ export default function EmployerProfile() {
         description: d.description || '',
       }))
       .catch(() => {});
-  }, [user]);
+  }, [user, authLoading]);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 

@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods, require_POST
 
-from .models import SearchHistory, Vacancy
+from .models import Vacancy
 
 
 def _ci_regex(s):
@@ -72,23 +72,12 @@ def api_vacancy_list(request):
         .distinct()
     )
 
-    recent_queries = []
-    if request.user.is_authenticated and request.user.is_applicant():
-        recent_queries = list(
-            SearchHistory.objects
-            .filter(user=request.user)
-            .exclude(query='')
-            .values_list('query', flat=True)
-            .distinct()[:20]
-        )
-
     return JsonResponse({
         'results': [_vacancy_dict(v) for v in page],
         'count': paginator.count,
         'num_pages': paginator.num_pages,
         'page': page.number,
         'cities': sorted(set(cities)),
-        'recent_queries': recent_queries,
     })
 
 
@@ -170,14 +159,12 @@ def api_vacancy_close(request, pk):
 
 @login_required
 @require_POST
-def api_save_search(request):
-    if not request.user.is_applicant():
-        return JsonResponse({'ok': False})
-    try:
-        body = json.loads(request.body)
-    except Exception:
-        body = {}
-    query = body.get('query', '').strip()
-    if query:
-        SearchHistory.objects.create(user=request.user, query=query)
+def api_vacancy_reopen(request, pk):
+    if not request.user.is_employer():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    vacancy = get_object_or_404(Vacancy, pk=pk, employer=request.user)
+    vacancy.status = Vacancy.OPEN
+    vacancy.save()
     return JsonResponse({'ok': True})
+
+

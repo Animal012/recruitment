@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { title: '', description: '', requirements: '', conditions: '', city: '', salary_from: '', salary_to: '' };
 
-function Field({ label, name, value, onChange, type = 'text', rows, required }) {
+function Field({ label, value, onChange, type = 'text', rows, required }) {
   const cls = 'w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
   return (
     <div>
@@ -23,7 +23,7 @@ function Field({ label, name, value, onChange, type = 'text', rows, required }) 
 
 export default function VacancyForm() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
   const [form, setForm] = useState(EMPTY);
@@ -31,6 +31,7 @@ export default function VacancyForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || user.role !== 'employer') { navigate('/'); return; }
     if (isEdit) {
       apiJson(`/api/vacancies/${id}/`)
@@ -45,7 +46,7 @@ export default function VacancyForm() {
         }))
         .catch(() => navigate('/my-vacancies'));
     }
-  }, [id, user]);
+  }, [id, user, authLoading]);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 

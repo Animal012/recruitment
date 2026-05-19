@@ -15,18 +15,13 @@ from .screening import run_screening
 def api_my_applications(request):
     apps = Application.objects.filter(
         applicant=request.user
-    ).select_related('vacancy__employer__employer_profile', 'screening_result')
+    ).select_related('vacancy__employer__employer_profile')
     results = []
     for app in apps:
         v = app.vacancy
         org = ''
         try:
             org = v.employer.employer_profile.organization_name
-        except Exception:
-            pass
-        screening = None
-        try:
-            screening = {'score': app.screening_result.score}
         except Exception:
             pass
         results.append({
@@ -36,9 +31,7 @@ def api_my_applications(request):
             'employer_name': org,
             'status': app.status,
             'status_display': app.get_status_display(),
-            'cover_letter': app.cover_letter,
             'created_at': app.created_at.strftime('%d.%m.%Y'),
-            'screening': screening,
         })
     return JsonResponse({'results': results})
 
@@ -51,18 +44,54 @@ def api_apply(request, pk):
     vacancy = get_object_or_404(Vacancy, pk=pk, status=Vacancy.OPEN)
     if Application.objects.filter(applicant=request.user, vacancy=vacancy).exists():
         return JsonResponse({'error': 'Вы уже откликались на эту вакансию'}, status=400)
-    try:
-        body = json.loads(request.body)
-    except Exception:
-        body = {}
-    cover_letter = body.get('cover_letter', '').strip()
     application = Application.objects.create(
         applicant=request.user,
         vacancy=vacancy,
-        cover_letter=cover_letter,
     )
     run_screening(application)
     return JsonResponse({'id': application.id}, status=201)
+
+
+@login_required
+def api_all_employer_applications(request):
+    if not request.user.is_employer():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    apps = Application.objects.filter(
+        vacancy__employer=request.user
+    ).select_related('applicant__applicant_profile', 'vacancy', 'screening_result').order_by('-created_at')
+    results = []
+    for app in apps:
+        screening = None
+        try:
+            screening = {'score': app.screening_result.score}
+        except Exception:
+            pass
+        city = ''
+        try:
+            city = app.applicant.applicant_profile.city
+        except Exception:
+            pass
+        name = ''
+        try:
+            name = app.applicant.applicant_profile.full_name()
+        except Exception:
+            name = app.applicant.username
+        results.append({
+            'id': app.id,
+            'applicant_id': app.applicant.id,
+            'applicant_name': name,
+            'applicant_city': city,
+            'vacancy_id': app.vacancy.id,
+            'vacancy_title': app.vacancy.title,
+            'status': app.status,
+            'status_display': app.get_status_display(),
+            'created_at': app.created_at.strftime('%d.%m.%Y'),
+            'screening': screening,
+        })
+    return JsonResponse({
+        'results': results,
+        'status_choices': [{'value': v, 'label': l} for v, l in Application.STATUS_CHOICES],
+    })
 
 
 @login_required
@@ -89,9 +118,9 @@ def api_vacancy_applications(request, pk):
             pass
         results.append({
             'id': app.id,
-            'applicant_name': app.applicant.get_full_name() or app.applicant.username,
+            'applicant_id': app.applicant.id,
+            'applicant_name': app.applicant.applicant_profile.full_name(),
             'applicant_city': city,
-            'cover_letter': app.cover_letter,
             'status': app.status,
             'status_display': app.get_status_display(),
             'created_at': app.created_at.strftime('%d.%m.%Y'),

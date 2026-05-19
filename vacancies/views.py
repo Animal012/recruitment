@@ -4,12 +4,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
 
 from .forms import VacancyForm
-from .models import SearchHistory, Vacancy
+from .models import Vacancy
 
 
 def _ci_regex(s):
@@ -44,23 +42,12 @@ def vacancy_list(request):
     page = paginator.get_page(request.GET.get('page'))
     cities = Vacancy.objects.filter(status=Vacancy.OPEN).exclude(city='').values_list('city', flat=True).distinct()
 
-    recent_queries = []
-    if request.user.is_authenticated and request.user.is_applicant():
-        recent_queries = list(
-            SearchHistory.objects
-            .filter(user=request.user)
-            .exclude(query='')
-            .values_list('query', flat=True)
-            .distinct()[:20]
-        )
-
     return render(request, 'vacancies/list.html', {
         'page_obj': page,
         'query': query,
         'city': city,
         'salary_from': salary_from,
         'cities': sorted(set(cities)),
-        'recent_queries': recent_queries,
     })
 
 
@@ -123,12 +110,3 @@ def vacancy_close(request, pk):
     return redirect('my_vacancies')
 
 
-@require_POST
-@login_required
-def save_search(request):
-    if not request.user.is_applicant():
-        return JsonResponse({'ok': False})
-    query = request.POST.get('query', '').strip()
-    if query:
-        SearchHistory.objects.create(user=request.user, query=query)
-    return JsonResponse({'ok': True})

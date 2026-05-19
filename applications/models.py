@@ -31,7 +31,6 @@ class Application(models.Model):
         verbose_name='Вакансия',
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING, verbose_name='Статус')
-    cover_letter = models.TextField(blank=True, verbose_name='Сопроводительное письмо')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата отклика')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
 
