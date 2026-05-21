@@ -31,6 +31,7 @@ class Application(models.Model):
         verbose_name='Вакансия',
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING, verbose_name='Статус')
+    withdrawn = models.BooleanField(default=False, verbose_name='Отозван соискателем')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата отклика')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
 

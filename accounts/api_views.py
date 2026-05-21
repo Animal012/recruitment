@@ -28,11 +28,13 @@ def me(request):
     if not request.user.is_authenticated:
         return JsonResponse({'authenticated': False}, status=401)
     u = request.user
-    first_name, last_name = '', ''
+    first_name, last_name, has_resume = '', '', False
     if u.is_applicant():
         try:
-            first_name = u.applicant_profile.first_name
-            last_name = u.applicant_profile.last_name
+            p = u.applicant_profile
+            first_name = p.first_name
+            last_name = p.last_name
+            has_resume = bool(p.resume_data)
         except Exception:
             pass
     data = {
@@ -44,6 +46,7 @@ def me(request):
         'last_name': last_name,
         'full_name': f'{first_name} {last_name}'.strip() or u.username,
         'role': u.role,
+        'has_resume': has_resume,
     }
     return JsonResponse(data)
 
@@ -57,7 +60,7 @@ def api_login(request):
     if user is None:
         return JsonResponse({'error': 'Неверный логин или пароль'}, status=400)
     login(request, user)
-    return JsonResponse({'id': user.id, 'username': user.username, 'role': user.role})
+    return JsonResponse({'id': user.id, 'username': user.username, 'email': user.email, 'role': user.role})
 
 
 @require_http_methods(['POST'])
@@ -241,6 +244,7 @@ def api_applicant_view(request, pk):
         if e['end_date']: e['end_date'] = str(e['end_date'])
     return JsonResponse({
         'username': applicant.username,
+        'email': applicant.email,
         'first_name': profile.first_name,
         'last_name': profile.last_name,
         'city': profile.city,
@@ -320,6 +324,41 @@ def api_account_settings(request):
     from django.contrib.auth import update_session_auth_hash
     update_session_auth_hash(request, user)
     return JsonResponse({'ok': True, 'username': user.username, 'email': user.email})
+
+
+@require_http_methods(['GET'])
+def api_employer_public_view(request, pk):
+    from django.shortcuts import get_object_or_404
+    from accounts.models import User
+    from vacancies.models import Vacancy
+    employer = get_object_or_404(User, pk=pk, role='employer')
+    try:
+        profile = employer.employer_profile
+    except EmployerProfile.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    open_vacancies = Vacancy.objects.filter(
+        employer=employer, status=Vacancy.OPEN
+    ).order_by('-created_at')
+    vacancies = []
+    for v in open_vacancies:
+        vacancies.append({
+            'id': v.id,
+            'title': v.title,
+            'city': v.city,
+            'salary_from': v.salary_from,
+            'salary_to': v.salary_to,
+            'created_at': v.created_at.strftime('%d.%m.%Y'),
+        })
+    return JsonResponse({
+        'id': employer.id,
+        'email': employer.email,
+        'organization_name': profile.organization_name,
+        'address': profile.address,
+        'phone': profile.phone,
+        'website': profile.website,
+        'description': profile.description,
+        'vacancies': vacancies,
+    })
 
 
 def api_employer_profile(request):

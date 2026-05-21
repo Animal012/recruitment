@@ -16,6 +16,8 @@ import ApplicantView from './pages/ApplicantView';
 import ApplicantProfile from './pages/ApplicantProfile';
 import EmployerProfile from './pages/EmployerProfile';
 import AccountSettings from './pages/AccountSettings';
+import Favorites from './pages/Favorites';
+import EmployerPublicProfile from './pages/EmployerPublicProfile';
 
 function ProfileRedirect() {
   const { user, loading } = useAuth();
@@ -42,10 +44,12 @@ function AppRoutes() {
         <Route path="/vacancies/:id" element={<VacancyDetail />} />
         <Route path="/vacancies/:id/edit" element={<VacancyForm />} />
         <Route path="/my-vacancies" element={<MyVacancies />} />
+        <Route path="/favorites" element={<Favorites />} />
         <Route path="/applications" element={<MyApplications />} />
         <Route path="/applications/vacancy/:id" element={<VacancyApplications />} />
         <Route path="/employer-applications" element={<EmployerApplications />} />
         <Route path="/applicant/:id" element={<ApplicantView />} />
+        <Route path="/employer/:id" element={<EmployerPublicProfile />} />
         <Route path="/settings" element={<AccountSettings />} />
         <Route path="/profile" element={<ProfileRedirect />} />
         <Route path="/profile/applicant" element={<ApplicantProfile />} />

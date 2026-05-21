@@ -6,9 +6,11 @@ from django.db import models
 class Vacancy(models.Model):
     OPEN = 'open'
     CLOSED = 'closed'
+    DELETED = 'deleted'
     STATUS_CHOICES = [
         (OPEN, 'Открыта'),
         (CLOSED, 'Закрыта'),
+        (DELETED, 'Удалена'),
     ]
 
     employer = models.ForeignKey(
@@ -37,3 +39,22 @@ class Vacancy(models.Model):
 
     def is_open(self):
         return self.status == self.OPEN
+
+
+class FavoriteVacancy(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='favorite_vacancies',
+    )
+    vacancy = models.ForeignKey(
+        Vacancy,
+        on_delete=models.CASCADE,
+        related_name='favorited_by',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [('user', 'vacancy')]
+        verbose_name = 'Избранная вакансия'
+        verbose_name_plural = 'Избранные вакансии'

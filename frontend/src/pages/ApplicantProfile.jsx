@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api, apiJson } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,6 +27,8 @@ const EMPTY_EXP = () => ({ id: null, company: '', position: '', start_date: '', 
 export default function ApplicantProfile() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const needResume = location.state?.noResume;
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({ first_name: '', last_name: '', phone: '', city: '', about: '', birth_date: '' });
   const [educations, setEducations] = useState([]);
@@ -128,6 +130,14 @@ export default function ApplicantProfile() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {needResume && (
+        <div className="mb-5 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm font-medium">
+          <svg className="w-5 h-5 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          Для отклика на вакансию необходимо загрузить резюме
+        </div>
+      )}
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Профиль соискателя</h1>
       <div className="grid md:grid-cols-3 gap-6">
 
@@ -217,7 +227,23 @@ export default function ApplicantProfile() {
                 </Field>
                 <div className="col-span-2">
                   <Field label="Дата рождения">
-                    <input type="date" value={form.birth_date} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} className={INPUT} />
+                    <input
+                      type="date"
+                      value={form.birth_date}
+                      min="1900-01-01"
+                      max={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setForm({ ...form, birth_date: e.target.value })}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!val) return;
+                        const year = parseInt(val.split('-')[0], 10);
+                        const currentYear = new Date().getFullYear();
+                        if (year < 1900 || year > currentYear) {
+                          setForm((f) => ({ ...f, birth_date: '' }));
+                        }
+                      }}
+                      className={INPUT}
+                    />
                   </Field>
                 </div>
                 <div className="col-span-2">

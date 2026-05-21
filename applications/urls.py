@@ -8,4 +8,5 @@ api_urlpatterns = [
     path('apply/<int:pk>/', api_views.api_apply, name='api_apply'),
     path('vacancy/<int:pk>/', api_views.api_vacancy_applications, name='api_vacancy_applications'),
     path('<int:pk>/status/', api_views.api_change_status, name='api_change_status'),
+    path('<int:pk>/withdraw/', api_views.api_withdraw_application, name='api_withdraw_application'),
 ]

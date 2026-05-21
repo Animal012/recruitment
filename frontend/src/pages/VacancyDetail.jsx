@@ -22,13 +22,22 @@ export default function VacancyDetail() {
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState('');
   const [applied, setApplied] = useState(false);
+  const [isFav, setIsFav] = useState(false);
 
   useEffect(() => {
     apiJson(`/api/vacancies/${id}/`)
-      .then((d) => { setVacancy(d); setApplied(d.already_applied); })
+      .then((d) => { setVacancy(d); setApplied(d.already_applied); setIsFav(d.is_favorited); })
       .catch(() => navigate('/vacancies'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const toggleFav = async () => {
+    if (!user) { navigate('/login'); return; }
+    try {
+      const res = await apiJson(`/api/vacancies/${id}/favorite/`, { method: 'POST' });
+      setIsFav(res.is_favorited);
+    } catch {}
+  };
 
   const handleApply = async (e) => {
     e.preventDefault();
@@ -41,6 +50,10 @@ export default function VacancyDetail() {
       });
       setApplied(true);
     } catch (err) {
+      if (err?.error === 'no_resume') {
+        navigate('/profile/applicant', { state: { noResume: true } });
+        return;
+      }
       setApplyError(err?.error || 'Ошибка отправки');
     } finally {
       setApplying(false);
@@ -72,10 +85,34 @@ export default function VacancyDetail() {
         {/* Main */}
         <div className="md:col-span-2 space-y-5">
           <div className="bg-white rounded-2xl border border-slate-100 p-6">
-            <h1 className="text-xl font-bold text-slate-900 mb-2">{vacancy.title}</h1>
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h1 className="text-xl font-bold text-slate-900">{vacancy.title}</h1>
+              {(!user || user.role === 'applicant') && (
+                <button
+                  onClick={toggleFav}
+                  className="flex-shrink-0 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+                  title={isFav ? 'Убрать из избранного' : 'Добавить в избранное'}
+                >
+                  <svg
+                    className={`w-6 h-6 transition-colors ${isFav ? 'text-red-500' : 'text-slate-300 hover:text-red-400'}`}
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    fill={isFav ? 'currentColor' : 'none'}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-3 mb-5">
               {vacancy.employer_name && (
-                <span className="text-sm text-slate-400">{vacancy.employer_name}</span>
+                <Link
+                  to={`/employer/${vacancy.employer_id}`}
+                  className="text-sm text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  {vacancy.employer_name}
+                </Link>
               )}
               {vacancy.city && (
                 <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-xs px-2.5 py-1 rounded-full">

@@ -10,4 +10,7 @@ api_urlpatterns = [
     path('<int:pk>/edit/', api_views.api_vacancy_edit, name='api_vacancy_edit'),
     path('<int:pk>/close/', api_views.api_vacancy_close, name='api_vacancy_close'),
     path('<int:pk>/reopen/', api_views.api_vacancy_reopen, name='api_vacancy_reopen'),
+    path('<int:pk>/delete/', api_views.api_vacancy_delete, name='api_vacancy_delete'),
+    path('favorites/', api_views.api_favorites_list, name='api_favorites_list'),
+    path('<int:pk>/favorite/', api_views.api_toggle_favorite, name='api_toggle_favorite'),
 ]

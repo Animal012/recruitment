@@ -28,6 +28,8 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await apiJson('/api/auth/logout/', { method: 'POST' });
+    localStorage.removeItem('search_history');
+    localStorage.removeItem('employer_app_search_history');
     setUser(null);
   };
 

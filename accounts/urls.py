@@ -16,4 +16,5 @@ api_urlpatterns = [
     path('settings/', api_views.api_account_settings, name='api_account_settings'),
     path('applicant/<int:pk>/', api_views.api_applicant_view, name='api_applicant_view'),
     path('applicant/<int:pk>/resume/', api_views.api_applicant_resume, name='api_applicant_resume'),
+    path('employer/<int:pk>/', api_views.api_employer_public_view, name='api_employer_public_view'),
 ]

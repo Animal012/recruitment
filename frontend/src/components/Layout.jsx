@@ -26,7 +26,7 @@ export default function Layout({ children }) {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -54,7 +54,10 @@ export default function Layout({ children }) {
               <>
                 <NavItem to="/vacancies">Вакансии</NavItem>
                 {user?.role === 'applicant' && (
-                  <NavItem to="/applications">Мои отклики</NavItem>
+                  <>
+                    <NavItem to="/favorites">Избранное</NavItem>
+                    <NavItem to="/applications">Мои отклики</NavItem>
+                  </>
                 )}
               </>
             )}
@@ -135,6 +138,13 @@ export default function Layout({ children }) {
       <main className="flex-1">
         {children}
       </main>
+
+      <footer className="border-t border-slate-100 bg-white mt-auto">
+        <div className="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-sm text-slate-400">© 2026 EduRecruit. Все права защищены.</p>
+          <p className="text-sm text-slate-400">Поддержка: +7 (800) 555-35-35</p>
+        </div>
+      </footer>
     </div>
   );
 }

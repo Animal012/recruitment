@@ -17,6 +17,18 @@ export default function MyApplications() {
   const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [withdrawing, setWithdrawing] = useState(null);
+
+  const withdraw = async (id) => {
+    if (!confirm('Отозвать отклик?')) return;
+    setWithdrawing(id);
+    try {
+      await apiJson(`/api/applications/${id}/withdraw/`, { method: 'POST' });
+      setApps((prev) => prev.filter((a) => a.id !== id));
+    } finally {
+      setWithdrawing(null);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -64,6 +76,13 @@ export default function MyApplications() {
                     {app.status_display}
                   </span>
                   <span className="text-xs text-slate-300">{app.created_at}</span>
+                  <button
+                    onClick={() => withdraw(app.id)}
+                    disabled={withdrawing === app.id}
+                    className="text-xs text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40"
+                  >
+                    Отозвать
+                  </button>
                 </div>
               </div>
             </div>

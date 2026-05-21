@@ -14,7 +14,7 @@ from .screening import run_screening
 @login_required
 def api_my_applications(request):
     apps = Application.objects.filter(
-        applicant=request.user
+        applicant=request.user, withdrawn=False
     ).select_related('vacancy__employer__employer_profile')
     results = []
     for app in apps:
@@ -44,6 +44,11 @@ def api_apply(request, pk):
     vacancy = get_object_or_404(Vacancy, pk=pk, status=Vacancy.OPEN)
     if Application.objects.filter(applicant=request.user, vacancy=vacancy).exists():
         return JsonResponse({'error': 'Вы уже откликались на эту вакансию'}, status=400)
+    try:
+        if not request.user.applicant_profile.resume_data:
+            return JsonResponse({'error': 'no_resume'}, status=400)
+    except Exception:
+        return JsonResponse({'error': 'no_resume'}, status=400)
     application = Application.objects.create(
         applicant=request.user,
         vacancy=vacancy,
@@ -132,6 +137,15 @@ def api_vacancy_applications(request, pk):
         'vacancy_id': vacancy.id,
         'results': results,
     })
+
+
+@login_required
+@require_POST
+def api_withdraw_application(request, pk):
+    application = get_object_or_404(Application, pk=pk, applicant=request.user)
+    application.withdrawn = True
+    application.save(update_fields=['withdrawn'])
+    return JsonResponse({'ok': True})
 
 
 @login_required

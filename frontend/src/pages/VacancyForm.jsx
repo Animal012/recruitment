@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { title: '', description: '', requirements: '', conditions: '', city: '', salary_from: '', salary_to: '' };
 
-function Field({ label, value, onChange, type = 'text', rows, required }) {
-  const cls = 'w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
+function Field({ label, value, onChange, numeric, rows, required, error }) {
+  const cls = `w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${error ? 'border-red-300' : 'border-slate-200'}`;
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -15,8 +15,16 @@ function Field({ label, value, onChange, type = 'text', rows, required }) {
       {rows ? (
         <textarea rows={rows} value={value} onChange={onChange} className={cls} />
       ) : (
-        <input type={type} value={value} onChange={onChange} required={required} className={cls} />
+        <input
+          inputMode={numeric ? 'numeric' : undefined}
+          value={value}
+          onChange={onChange}
+          required={required}
+          className={cls}
+          style={numeric ? { MozAppearance: 'textfield' } : undefined}
+        />
       )}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 }
@@ -53,12 +61,14 @@ export default function VacancyForm() {
   const handle = async (e) => {
     e.preventDefault();
     setErrors({});
+    const sf = form.salary_from ? Number(form.salary_from) : null;
+    const st = form.salary_to ? Number(form.salary_to) : null;
+    if (sf && st && sf > st) {
+      setErrors({ salary: 'Зарплата "от" не может быть больше "до"' });
+      return;
+    }
     setLoading(true);
-    const payload = {
-      ...form,
-      salary_from: form.salary_from ? Number(form.salary_from) : null,
-      salary_to: form.salary_to ? Number(form.salary_to) : null,
-    };
+    const payload = { ...form, salary_from: sf, salary_to: st };
     try {
       if (isEdit) {
         await apiJson(`/api/vacancies/${id}/edit/`, { method: 'POST', body: JSON.stringify(payload) });
@@ -81,18 +91,21 @@ export default function VacancyForm() {
 
       <div className="bg-white rounded-2xl border border-slate-100 p-7">
         <form onSubmit={handle} className="space-y-5">
-          <Field label="Название вакансии" name="title" value={form.title} onChange={set('title')} required />
-          {errors.title && <p className="text-xs text-red-500 -mt-3">{errors.title.join?.(' ') || errors.title}</p>}
-
-          <Field label="Описание" name="description" value={form.description} onChange={set('description')} rows={5} />
-          <Field label="Требования" name="requirements" value={form.requirements} onChange={set('requirements')} rows={4} />
-          <Field label="Условия работы" name="conditions" value={form.conditions} onChange={set('conditions')} rows={3} />
-          <Field label="Город" name="city" value={form.city} onChange={set('city')} />
+          <Field label="Название вакансии" value={form.title} onChange={set('title')} required error={errors.title?.join?.(' ') || errors.title} />
+          <Field label="Описание" value={form.description} onChange={set('description')} rows={5} required error={errors.description} />
+          <Field label="Требования" value={form.requirements} onChange={set('requirements')} rows={4} />
+          <Field label="Условия работы" value={form.conditions} onChange={set('conditions')} rows={3} />
+          <Field label="Город" value={form.city} onChange={set('city')} required error={errors.city} />
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Зарплата от (₽)" name="salary_from" value={form.salary_from} onChange={set('salary_from')} type="number" />
-            <Field label="Зарплата до (₽)" name="salary_to" value={form.salary_to} onChange={set('salary_to')} type="number" />
+            <Field label="Зарплата от (₽)" value={form.salary_from}
+              onChange={(e) => setForm({ ...form, salary_from: e.target.value.replace(/\D/g, '') })}
+              numeric required error={errors.salary_from} />
+            <Field label="Зарплата до (₽)" value={form.salary_to}
+              onChange={(e) => setForm({ ...form, salary_to: e.target.value.replace(/\D/g, '') })}
+              numeric />
           </div>
+          {errors.salary && <p className="text-xs text-red-500 -mt-3">{errors.salary}</p>}
 
           <div className="flex gap-3 pt-2">
             <button
